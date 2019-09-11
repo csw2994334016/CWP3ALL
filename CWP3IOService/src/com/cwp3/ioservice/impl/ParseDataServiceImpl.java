@@ -124,7 +124,47 @@ public class ParseDataServiceImpl implements ParseDataService {
         parseLocationInfo(smartCwpImportData.getSmartVpsVslLocationsInfoList(), allRuntimeData);
         parseHatchCoverInfo(smartCwpImportData.getSmartVpsVslHatchcoversInfoList(), allRuntimeData);
         parseMachineInfo(smartCwpImportData.getSmartVesselMachinesInfoList(), allRuntimeData);
+        // 处理一下特殊船舶结构：非两边的槽，如果甲板上/下有，甲板下/上没有，则进行相应的补全
+        analyzeStructData(allRuntimeData);
     }
+
+    private void analyzeStructData(AllRuntimeData allRuntimeData) {
+        for (StructureData structureData : allRuntimeData.getAllStructureDataList()) {
+            List<VMHatch> vmHatchList = structureData.getAllVMHatchs();
+            for (VMHatch vmHatch : vmHatchList) {
+                List<Integer> bayNoList = vmHatch.getBayNos();
+                for (Integer bayNo : bayNoList) {
+                    VMBay vmBayA = structureData.getVMBayByBayKey(StringUtil.getKey(bayNo, CWPDomain.BOARD_ABOVE));
+                    VMBay vmBayB = structureData.getVMBayByBayKey(StringUtil.getKey(bayNo, CWPDomain.BOARD_BELOW));
+                    List<Integer> rowNoListA = vmBayA.getRowNoList();
+                    List<Integer> rowNoListB = vmBayB.getRowNoList();
+                    if (rowNoListA.contains(0) && !rowNoListB.contains(0)) {
+                        addVMRowAndVMSlot(vmBayB, structureData);
+                    } else if (!rowNoListA.contains(0) && rowNoListB.contains(0)) {
+                        addVMRowAndVMSlot(vmBayA, structureData);
+                    }
+                }
+            }
+        }
+    }
+
+    private void addVMRowAndVMSlot(VMBay vmBayA, StructureData structureData) {
+        VMRow vmRowSide = vmBayA.getVMRowByRowNo(1);
+        if (vmRowSide != null) {
+            // 添加排
+            VMRow vmRow = new VMRow(vmBayA.getBayId(), vmBayA.getBayKey(), 0);
+            vmBayA.addVMRow(vmRow);
+            // 添加VMSlot
+            for (VMSlot vmSlot : vmRowSide.getAllVMSlotList()) {
+                VMContainerSlot vmContainerSlotSide = (VMContainerSlot) vmSlot;
+                VMPosition vmPosition = new VMPosition(vmSlot.getVmPosition().getBayNo(), 0, vmSlot.getVmPosition().getTierNo());
+                VMContainerSlot vmContainerSlot = new VMContainerSlot(vmPosition, vmBayA, vmContainerSlotSide.getSize());
+                vmRow.addVMSlot(vmContainerSlot);
+                structureData.addVMSlot(vmContainerSlot);
+            }
+        }
+    }
+
 
     private void parseWorkingData(SmartCwpImportData smartCwpImportData, AllRuntimeData allRuntimeData) {
         parseCraneWorkFlow(smartCwpImportData.getSmartCraneWorkFlowInfoList(), allRuntimeData);

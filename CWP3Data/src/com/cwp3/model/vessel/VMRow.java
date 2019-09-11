@@ -1,6 +1,8 @@
 package com.cwp3.model.vessel;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -68,5 +70,9 @@ public class VMRow {
 
     public VMSlot getVMSlot(Integer curTierNo) {
         return vmSlotMap.get(curTierNo);
+    }
+
+    public List<VMSlot> getAllVMSlotList() {
+        return new ArrayList<>(vmSlotMap.values());
     }
 }
