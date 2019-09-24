@@ -4,10 +4,7 @@ import com.cwp3.data.AllRuntimeData;
 import com.cwp3.data.single.WorkingData;
 import com.cwp3.domain.CWPDomain;
 import com.cwp3.single.algorithm.cwp.CwpProcess1;
-import com.cwp3.single.service.CwpAnalyzerService;
-import com.cwp3.single.service.CwpService;
-import com.cwp3.single.service.HatchBlockService;
-import com.cwp3.single.service.MoveService;
+import com.cwp3.single.service.*;
 
 /**
  * Created by csw on 2018/6/7.
@@ -18,11 +15,13 @@ public class CwpServiceImpl implements CwpService {
     private CwpAnalyzerService cwpAnalyzerService;
     private HatchBlockService hatchBlockService;
     private MoveService moveService;
+    private LockWorkBlockService lockWorkBlockService;
 
     public CwpServiceImpl() {
         cwpAnalyzerService = new CwpAnalyzerServiceImpl();
         hatchBlockService = new HatchBlockServiceImpl();
         moveService = new MoveServiceImpl();
+        lockWorkBlockService = new LockWorkBlockServiceImpl();
     }
 
     @Override
@@ -32,6 +31,7 @@ public class CwpServiceImpl implements CwpService {
         workingData.getLogger().logInfo("调用单船CWP算法，对船舶(berthId:" + berthId + ")进行CWP计划安排(" + workingData.getCwpType() + ")。");
         hatchBlockService.makeHatchBlock(allRuntimeData, berthId);
         moveService.makeWorkFlow(allRuntimeData, berthId);
+        lockWorkBlockService.analyzeLockWorkBlock(allRuntimeData, berthId);
         try {
             CwpProcess1 cwpProcess = new CwpProcess1();
             cwpProcess.processCwp(allRuntimeData, berthId);

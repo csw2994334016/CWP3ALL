@@ -433,6 +433,9 @@ public class CwpDataMethod {
                     cwpData.getMoveData().setCurMoveOrder(cwpBay.getHatchId(), firstOrder);
                     cwpData.getMoveData().setCurWorkFlow(cwpBay.getHatchId(), workMove.getWorkFlow());
                     cwpData.getMoveData().setCurWorkFlow1(cwpBay.getBayNo(), workMove.getWorkFlow());
+                    if (CWPDomain.MOVE_TYPE_CNT.equals(workMove1.getMoveType())) {
+                        cwpCrane.setDpWorkCntAmount(cwpCrane.getDpWorkCntAmount() + 1);
+                    }
                 } else { // 超过最小作业时间
                     break;
                 }

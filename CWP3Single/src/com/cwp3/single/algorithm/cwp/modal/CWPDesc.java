@@ -24,7 +24,9 @@ public enum CWPDesc {
     lastSelectHatch(4, "桥机保持在上次选择的舱中作业"),
     steppingCntFirst(5, "同一个舱内垫脚箱可以连续做完时，优先选择垫脚作业"),
 
-    mustSelectByCrane(6, "避免形成新的重点路");
+    mustSelectByCrane(6, "避免形成新的重点路"),
+
+    bayLockByCrane(7, "人工锁定桥机作业倍位，优先级最高");
 
     private int code;
     private String desc;

@@ -28,6 +28,8 @@ public class WorkingData {
     private Map<String, VMContainer> discContainerMap; //进出口船图箱信息：<vLocation, VMContainer> 小位置，02需要拆成01和03
     private Map<String, VMContainer> loadContainerMap;
     private List<VMContainerAmount> vmContainerAmountList; //进出口船图箱量信息
+    private Map<String, List<WorkBlock>> lockCraneWorkBlockMap; // 锁定作业块，按桥机存储
+    private Map<Long, List<WorkBlock>> lockHatchWorkBlockMap; // 锁定作业块，按桥机存储
 
     // 过境箱数据
     private Map<String, VMContainer> throughContainerMap; //过境箱信息：<vLocation, VMContainer> 小位置，02需要拆成01和03
@@ -78,6 +80,8 @@ public class WorkingData {
         throughContainerMap = new HashMap<>();
         reStowContainerMapD = new HashMap<>();
         reStowContainerMapL = new HashMap<>();
+        lockCraneWorkBlockMap = new HashMap<>();
+        lockHatchWorkBlockMap = new HashMap<>();
     }
 
     public List<VMContainer> getRecycleCntList() {
@@ -386,5 +390,27 @@ public class WorkingData {
 
     public void setCmCraneMoveRangeMap(Map<String, CMCraneMoveRange> cmCraneMoveRangeMap) {
         this.cmCraneMoveRangeMap = cmCraneMoveRangeMap;
+    }
+
+    public void addLockCraneWorkBlock(WorkBlock workBlock) {
+        if (lockCraneWorkBlockMap.get(workBlock.getCraneNo()) == null) {
+            lockCraneWorkBlockMap.put(workBlock.getCraneNo(), new ArrayList<WorkBlock>());
+        }
+        lockCraneWorkBlockMap.get(workBlock.getCraneNo()).add(workBlock);
+    }
+
+    public Map<String, List<WorkBlock>> getLockCraneWorkBlockMap() {
+        return lockCraneWorkBlockMap;
+    }
+
+    public void addLockHatchWorkBlock(WorkBlock workBlock) {
+        if (lockHatchWorkBlockMap.get(workBlock.getHatchId()) == null) {
+            lockHatchWorkBlockMap.put(workBlock.getHatchId(), new ArrayList<WorkBlock>());
+        }
+        lockHatchWorkBlockMap.get(workBlock.getHatchId()).add(workBlock);
+    }
+
+    public Map<Long, List<WorkBlock>> getLockHatchWorkBlockMap() {
+        return lockHatchWorkBlockMap;
     }
 }

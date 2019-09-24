@@ -14,6 +14,7 @@ import com.cwp3.model.crane.*;
 import com.cwp3.model.log.Logger;
 import com.cwp3.model.other.AreaContainer;
 import com.cwp3.model.vessel.*;
+import com.cwp3.model.work.WorkBlock;
 import com.cwp3.single.algorithm.move.method.PublicMethod;
 import com.cwp3.utils.BeanCopyUtil;
 import com.cwp3.utils.StringUtil;
@@ -172,6 +173,7 @@ public class ParseDataServiceImpl implements ParseDataService {
         parseVesselContainer(smartCwpImportData.getSmartVesselContainerInfoList(), allRuntimeData);
         parseCranePool(smartCwpImportData.getSmartVesselCranePoolInfoList(), smartCwpImportData.getSmartCranePoolInfoList(), smartCwpImportData.getSmartCraneFirstWorkInfoList(), allRuntimeData);
         parseCraneAddOrDelete(smartCwpImportData.getSmartCraneAddOrDelInfoList(), allRuntimeData);
+        parseCwpWorkBlock(smartCwpImportData.getSmartCwpWorkBlockInfoList(), allRuntimeData);
     }
 
     private List<VMSchedule> parseSchedule(List<SmartScheduleIdInfo> smartScheduleIdInfoList, String version) {
@@ -799,6 +801,9 @@ public class ParseDataServiceImpl implements ParseDataService {
                     vmContainer.setEfFlag(smartVesselContainerInfo.getEffg());
                     if (CWPDomain.THROUGH_NO.equals(throughFlag)) { //非过境箱
                         //人工指定作业工艺
+                        vmContainer.setCwoManualWorkflowTemp(workFlow);
+                        vmContainer.setCwoManualSeqNoTemp(moveOrder);
+                        vmContainer.setCwoCraneNoTemp(smartVesselContainerInfo.getCraneNo());
                         if ("Y".equals(smartVesselContainerInfo.getCwoManualWorkflow())) {
                             if (StringUtil.isNotBlank(workFlow)) {
                                 vmContainer.setWorkFlow(PublicMethod.getWorkFlowStr1(workFlow, size));
@@ -1017,6 +1022,25 @@ public class ParseDataServiceImpl implements ParseDataService {
             } catch (Exception e) {
                 logger.logError("解析堆场箱区(areaNo:" + areaNo + ")统计信息过程中发生数据异常！");
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private void parseCwpWorkBlock(List<SmartCwpWorkBlockInfo> smartCwpWorkBlockInfoList, AllRuntimeData allRuntimeData) {
+        for (SmartCwpWorkBlockInfo smartCwpWorkBlockInfo : smartCwpWorkBlockInfoList) {
+            if ("Y".equals(smartCwpWorkBlockInfo.getLockFlag())) {
+                logger.logError("锁定作业块桥机号不可以为空", !StringUtil.isNotBlank(smartCwpWorkBlockInfo.getCraneNo()));
+                logger.logError("锁定作业块桥机序不可以为空", smartCwpWorkBlockInfo.getCraneSeq() == null);
+                logger.logError("锁定作业块舱序不可以为空", smartCwpWorkBlockInfo.getHatchSeq() == null);
+                logger.logError("锁定作业块倍位号不可以为空", !StringUtil.isNotBlank(smartCwpWorkBlockInfo.getBayNo()));
+                logger.logError("锁定作业块计划作业量不可以为空", smartCwpWorkBlockInfo.getPlanAmount() == null);
+                WorkingData workingData = allRuntimeData.getWorkingDataByBerthId(smartCwpWorkBlockInfo.getBerthId());
+                if (workingData != null) {
+                    WorkBlock workBlock = new WorkBlock();
+                    workBlock = (WorkBlock) BeanCopyUtil.copyBean(smartCwpWorkBlockInfo, workBlock);
+                    workingData.addLockHatchWorkBlock(workBlock);
+                    workingData.addLockCraneWorkBlock(workBlock);
+                }
             }
         }
     }

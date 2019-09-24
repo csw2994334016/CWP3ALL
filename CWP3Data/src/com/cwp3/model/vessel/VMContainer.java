@@ -35,6 +35,10 @@ public class VMContainer {
     private String cwoManualWi; //人工锁定的船箱位，发箱时不能作业的箱子，CWP计划排到最后面
     private String reStowType; // 出翻舱标记
 
+    private String cwoManualWorkflowTemp; // 人工指定作业工艺，中间变量
+    private Long cwoManualSeqNoTemp; // 人工指定作业顺序，中间变量
+    private String cwoCraneNoTemp; // 人工指定桥机号，中间变量
+
     private String craneNo; //桥机号
     private String workFlow; //作业工艺
     private Long moveOrder; //作业顺序
@@ -410,5 +414,29 @@ public class VMContainer {
 
     public void setReStowType(String reStowType) {
         this.reStowType = reStowType;
+    }
+
+    public String getCwoManualWorkflowTemp() {
+        return cwoManualWorkflowTemp;
+    }
+
+    public void setCwoManualWorkflowTemp(String cwoManualWorkflowTemp) {
+        this.cwoManualWorkflowTemp = cwoManualWorkflowTemp;
+    }
+
+    public Long getCwoManualSeqNoTemp() {
+        return cwoManualSeqNoTemp;
+    }
+
+    public void setCwoManualSeqNoTemp(Long cwoManualSeqNoTemp) {
+        this.cwoManualSeqNoTemp = cwoManualSeqNoTemp;
+    }
+
+    public String getCwoCraneNoTemp() {
+        return cwoCraneNoTemp;
+    }
+
+    public void setCwoCraneNoTemp(String cwoCraneNoTemp) {
+        this.cwoCraneNoTemp = cwoCraneNoTemp;
     }
 }

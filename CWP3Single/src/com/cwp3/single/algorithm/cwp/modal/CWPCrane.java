@@ -55,6 +55,8 @@ public class CWPCrane implements Serializable {
     private Long craneWorkTime; // 加减的桥机只作业这么多量
     private String addOrDelType; // 经过加减桥机时间分析，只下路一次（包括中途上路的）、只上路一次就没下路
 
+    private Long dpWorkCntAmount; // 桥机作业的指令量
+
     public CWPCrane(String craneNo) {
         this.craneNo = craneNo;
         dpCurrentTime = 0L;
@@ -67,6 +69,7 @@ public class CWPCrane implements Serializable {
         dpWait = Boolean.FALSE;
         cwpCraneWorkList = new ArrayList<>();
         craneWorkTime = 0L;
+        dpWorkCntAmount = 0L;
     }
 
     @Override
@@ -350,6 +353,14 @@ public class CWPCrane implements Serializable {
 
     public void setTandemFlag(String tandemFlag) {
         this.tandemFlag = tandemFlag;
+    }
+
+    public Long getDpWorkCntAmount() {
+        return dpWorkCntAmount;
+    }
+
+    public void setDpWorkCntAmount(Long dpWorkCntAmount) {
+        this.dpWorkCntAmount = dpWorkCntAmount;
     }
 
     public CWPCrane deepCopy() {

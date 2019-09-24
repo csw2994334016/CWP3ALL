@@ -1,7 +1,7 @@
 package com.cwp3.single.algorithm.cwp.decision;
 
 import com.cwp3.domain.CWPDomain;
-import com.cwp3.model.config.CwpConfig;
+import com.cwp3.model.work.WorkBlock;
 import com.cwp3.model.work.WorkMove;
 import com.cwp3.single.algorithm.cwp.method.PublicMethod;
 import com.cwp3.single.algorithm.cwp.modal.*;
@@ -122,7 +122,8 @@ public class Evaluator {
 //                }
 //            }
 
-            //todo: 1、缩减分支，预演推算由于开路舱位，导致后续：桥机等待、产生安全距离的情况
+            //1、缩减分支，预演推算由于开路舱位，导致后续：桥机等待、产生安全距离的情况
+
             cwpData.getWorkingData().getLogger().logDebug("缩减后分支：" + dpPairLists.size());
 
             List<DPCraneSelectBay> dpCraneSelectBayList = new ArrayList<>();
@@ -265,6 +266,30 @@ public class Evaluator {
                 if (dpCraneSelectBay != null) {
                     dpCraneSelectBay.getDpFeatureList().clear();
                     dpCraneSelectBay.getDpFeatureList().add(new DPFeature(CWPDesc.mustSelectByCrane.getCode(), CWPDesc.mustSelectByCrane.getDesc()));
+                }
+            }
+        }
+        // 人工锁定的桥机作业块与桥机当前累计作业进行对比，是不是到达桥机锁定作业块的倍位
+        for (CWPCrane cwpCrane : cwpCranes) {
+            List<WorkBlock> workBlockList = cwpData.getWorkingData().getLockCraneWorkBlockMap().get(cwpCrane.getCraneNo());
+            if (workBlockList != null && workBlockList.size() > 0) {
+                Collections.sort(workBlockList, new Comparator<WorkBlock>() {
+                    @Override
+                    public int compare(WorkBlock o1, WorkBlock o2) {
+                        return o1.getCraneSeq().compareTo(o2.getCraneSeq());
+                    }
+                });
+                int n = 0;
+                for (WorkBlock workBlock : workBlockList) {
+                    if (cwpCrane.getDpWorkCntAmount() >= n && cwpCrane.getDpWorkCntAmount() < n + workBlock.getPlanAmount()) {
+                        DPCraneSelectBay dpCraneSelectBay = DPCraneSelectBay.getDpCraneSelectBayByPair(dpCraneSelectBayList, new DPPair<>(cwpCrane.getCraneNo(), Integer.valueOf(workBlock.getBayNo())));
+                        if (dpCraneSelectBay != null) {
+                            dpCraneSelectBay.getDpFeatureList().clear();
+                            dpCraneSelectBay.getDpFeatureList().add(new DPFeature(CWPDesc.bayLockByCrane.getCode(), CWPDesc.bayLockByCrane.getDesc()));
+                        }
+                        break;
+                    }
+                    n += workBlock.getPlanAmount();
                 }
             }
         }
