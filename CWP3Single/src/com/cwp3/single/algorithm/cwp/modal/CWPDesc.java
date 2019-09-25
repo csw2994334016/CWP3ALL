@@ -9,6 +9,7 @@ public enum CWPDesc {
     canNotWork(0, "不能选择该倍位（物理移动限制/没有可作业量）"),
     outWorkRange(1, "桥机平均作业量划分范围之外"),
     reStowCntDelay(1, "该倍位出翻舱箱子还没有卸船，则需要推迟作业"),
+    nonLockBayCrane(1, "该倍位被锁定，则其它桥机不能选择"),
 
     inWorkRange(2, "桥机平均作业量划分范围之内"),
     hatchBayDelay(1, "同一个舱内倍位推迟作业更合适"),

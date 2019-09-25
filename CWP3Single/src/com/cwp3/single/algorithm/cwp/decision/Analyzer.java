@@ -70,53 +70,78 @@ public class Analyzer {
             long reStowCntTimeL = 0;
             long time = cwpData.getDpCurrentTime() - (cwpData.getWorkingData().getVmSchedule().getPlanBeginWorkTime().getTime() / 1000);
             Map<Integer, List<WorkMove>> availableWorkMoveMap = cwpData.getMoveResults().getAvailableWorkMoveMapByBayNo(cwpBay.getBayNo());
-            F:
-            for (List<WorkMove> workMoveList : availableWorkMoveMap.values()) { //分档进行可作业量分析
-                for (WorkMove workMove : workMoveList) {
-                    if (time < 3600 && CWPDomain.YES.equals(cwpData.getWorkingData().getCwpConfig().getDeckWorkLater())) { // 第一关是装船,且当前时间在开工时间一个小时内,则该倍位不可作业
-                        if (CWPDomain.DL_TYPE_LOAD.equals(workMove.getDlType()) && workMove.getTierNo() > 50) {
-                            break F;
-                        }
-                    }
-                    availableWt += workMove.getWorkTime();
-                    if (workMove.getVmSlotSet().size() == 1 && cwpData.getStructureData().isSteppingVMSlot(workMove.getOneVMSlot())) { //判断move是垫脚
-                        steppingCntAvailableWt += workMove.getWorkTime();
-                    }
-                    if (workMove.getBayNo() % 2 == 0) { // 大倍位上的箱子
-                        availableDiscWtD += workMove.getDlType().equals(CWPDomain.DL_TYPE_DISC) ? workMove.getWorkTime() : 0;
-                        availableLoadWtD += workMove.getDlType().equals(CWPDomain.DL_TYPE_LOAD) ? workMove.getWorkTime() : 0;
-                    } else {
-                        availableDiscWtX += CWPDomain.DL_TYPE_DISC.equals(workMove.getDlType()) ? workMove.getWorkTime() : 0;
-                        availableLoadWtX += workMove.getDlType().equals(CWPDomain.DL_TYPE_LOAD) ? workMove.getWorkTime() : 0;
-                    }
+            List<WorkMove> allWorkMoveList = new ArrayList<>();
+            for (List<WorkMove> workMoveList : availableWorkMoveMap.values()) {
+                allWorkMoveList.addAll(workMoveList);
+            }
+            Collections.sort(allWorkMoveList, new Comparator<WorkMove>() {
+                @Override
+                public int compare(WorkMove o1, WorkMove o2) {
+                    return o1.getMoveOrder().compareTo(o2.getMoveOrder());
+                }
+            });
+            // 判断第一关箱子是否被作业块锁定，设置该倍位只能被哪部桥机作业
+            if (allWorkMoveList.size() > 0) {
+                for (WorkMove workMove : allWorkMoveList) {
                     if (CWPDomain.MOVE_TYPE_CNT.equals(workMove.getMoveType())) {
-                        if (workMove.getDlType().equals(CWPDomain.DL_TYPE_LOAD)) {
-                            loadNum++;
-                        } else {
-                            discNum++;
+                        VMContainer vmContainer = cwpData.getWorkingData().getVMContainerByVMSlot(workMove.getOneVMSlot(), workMove.getDlType());
+                        if (vmContainer.getCwoCraneNoTemp() != null) {
+                            cwpBay.setDpLockByCraneNo(vmContainer.getCwoCraneNoTemp());
                         }
+                        break;
                     }
-                    // 装船出翻舱箱子一定要在卸船出翻舱箱子作业之后一个小时
-                    if (CWPDomain.DL_TYPE_LOAD.equals(workMove.getDlType())) {
-                        for (VMSlot vmSlot : workMove.getVmSlotSet()) {
-                            VMContainer vmContainer = cwpData.getWorkingData().getVMContainerByVMSlot(vmSlot, workMove.getDlType());
-                            if (vmContainer != null && vmContainer.getYardContainerId() != null) {
-                                VMContainer vmContainerD = cwpData.getWorkingData().getReStowContainerMapD().get(vmContainer.getYardContainerId());
-                                if (vmContainerD != null) {
-                                    // 找到卸船出翻舱箱子的move，判断是否已经作业，决定该倍位是否要推迟作业
-                                    VMPosition vmPosition = new VMPosition(vmContainerD.getvLocation());
-                                    VMSlot vmSlotD;
-                                    if (vmPosition.getBayNo() % 2 == 0) {
-                                        vmSlotD = cwpData.getStructureData().getVMSlotByVLocation(new VMPosition(vmPosition.getBayNo() - 1, vmPosition.getRowNo(), vmPosition.getTierNo()).getVLocation());
-                                    } else {
-                                        vmSlotD = cwpData.getStructureData().getVMSlotByVLocation(vmPosition.getVLocation());
-                                    }
-                                    WorkMove workMoveD = cwpData.getMoveData().getWorkMoveByVMSlot(vmSlotD, workMove.getDlType());
-                                    if (workMoveD != null && workMoveD.getMoveOrder() == null && availableWt < 250) { // 说明卸船出翻舱还没有作业
-                                        reStowCntTimeL = availableWt;
-                                    }
-                                    break;
+                }
+            }
+            for (WorkMove workMove : allWorkMoveList) {
+                if (time < 3600 && CWPDomain.YES.equals(cwpData.getWorkingData().getCwpConfig().getDeckWorkLater())) { // 第一关是装船,且当前时间在开工时间一个小时内,则该倍位不可作业
+                    if (CWPDomain.DL_TYPE_LOAD.equals(workMove.getDlType()) && workMove.getTierNo() > 50) {
+                        break;
+                    }
+                }
+                if (cwpBay.getDpLockByCraneNo() != null && CWPDomain.MOVE_TYPE_CNT.equals(workMove.getMoveType())) {
+                    VMContainer vmContainer = cwpData.getWorkingData().getVMContainerByVMSlot(workMove.getOneVMSlot(), workMove.getDlType());
+                    if (vmContainer.getCwoCraneNoTemp() != null && !cwpBay.getDpLockByCraneNo().equals(vmContainer.getCwoCraneNoTemp())) {
+                        break;
+                    }
+                }
+                availableWt += workMove.getWorkTime();
+                if (workMove.getVmSlotSet().size() == 1 && cwpData.getStructureData().isSteppingVMSlot(workMove.getOneVMSlot())) { //判断move是垫脚
+                    steppingCntAvailableWt += workMove.getWorkTime();
+                }
+                if (workMove.getBayNo() % 2 == 0) { // 大倍位上的箱子
+                    availableDiscWtD += workMove.getDlType().equals(CWPDomain.DL_TYPE_DISC) ? workMove.getWorkTime() : 0;
+                    availableLoadWtD += workMove.getDlType().equals(CWPDomain.DL_TYPE_LOAD) ? workMove.getWorkTime() : 0;
+                } else {
+                    availableDiscWtX += CWPDomain.DL_TYPE_DISC.equals(workMove.getDlType()) ? workMove.getWorkTime() : 0;
+                    availableLoadWtX += workMove.getDlType().equals(CWPDomain.DL_TYPE_LOAD) ? workMove.getWorkTime() : 0;
+                }
+                if (CWPDomain.MOVE_TYPE_CNT.equals(workMove.getMoveType())) {
+                    if (workMove.getDlType().equals(CWPDomain.DL_TYPE_LOAD)) {
+                        loadNum++;
+                    } else {
+                        discNum++;
+                    }
+                }
+                // 装船出翻舱箱子一定要在卸船出翻舱箱子作业之后一个小时
+                if (CWPDomain.DL_TYPE_LOAD.equals(workMove.getDlType())) {
+                    for (VMSlot vmSlot : workMove.getVmSlotSet()) {
+                        VMContainer vmContainer = cwpData.getWorkingData().getVMContainerByVMSlot(vmSlot, workMove.getDlType());
+                        if (vmContainer != null && vmContainer.getYardContainerId() != null) {
+                            VMContainer vmContainerD = cwpData.getWorkingData().getReStowContainerMapD().get(vmContainer.getYardContainerId());
+                            if (vmContainerD != null) {
+                                // 找到卸船出翻舱箱子的move，判断是否已经作业，决定该倍位是否要推迟作业
+                                VMPosition vmPosition = new VMPosition(vmContainerD.getvLocation());
+                                VMSlot vmSlotD;
+                                if (vmPosition.getBayNo() % 2 == 0) {
+                                    vmSlotD = cwpData.getStructureData().getVMSlotByVLocation(new VMPosition(vmPosition.getBayNo() - 1, vmPosition.getRowNo(), vmPosition.getTierNo()).getVLocation());
+                                } else {
+                                    vmSlotD = cwpData.getStructureData().getVMSlotByVLocation(vmPosition.getVLocation());
                                 }
+                                WorkMove workMoveD = cwpData.getMoveData().getWorkMoveByVMSlot(vmSlotD, workMove.getDlType());
+                                if (workMoveD != null && workMoveD.getMoveOrder() == null && availableWt < 250) { // 说明卸船出翻舱还没有作业
+                                    reStowCntTimeL = availableWt;
+                                }
+                                break;
                             }
                         }
                     }

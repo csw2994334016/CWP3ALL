@@ -36,6 +36,8 @@ public class CWPBay implements Serializable {
     private String dpSelectedByCraneNo; // 倍位被某部桥机指定要作业
     private String dpSelectedByCraneTrue; // 为"Y"表示可以继续在该舱作业
 
+    private String dpLockByCraneNo; // 当前决策时，该倍位被哪部桥机锁定了
+
     public CWPBay(Integer bayNo, Long hatchId, Double workPosition) {
         this.bayNo = bayNo;
         this.hatchId = hatchId;
@@ -194,6 +196,14 @@ public class CWPBay implements Serializable {
 
     public String getDpSelectedByCraneTrue() {
         return dpSelectedByCraneTrue;
+    }
+
+    public String getDpLockByCraneNo() {
+        return dpLockByCraneNo;
+    }
+
+    public void setDpLockByCraneNo(String dpLockByCraneNo) {
+        this.dpLockByCraneNo = dpLockByCraneNo;
     }
 
     public void setDpSelectedByCraneTrue(String dpSelectedByCraneTrue) {

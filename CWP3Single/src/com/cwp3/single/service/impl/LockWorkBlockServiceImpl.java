@@ -50,7 +50,11 @@ public class LockWorkBlockServiceImpl implements LockWorkBlockService {
                 }
             });
             int amount = 0;
+            Map<Integer, String> orderCraneMap = new HashMap<>();
             for (WorkBlock workBlock : workBlockList) {
+                for (int i = amount; i < amount + workBlock.getPlanAmount(); i++) {
+                    orderCraneMap.put(i, workBlock.getCraneNo());
+                }
                 amount += workBlock.getPlanAmount();
             }
             for (int i = 0; i < amount; i++) {
@@ -60,6 +64,7 @@ public class LockWorkBlockServiceImpl implements LockWorkBlockService {
                         vmContainer.setCwoManualWorkflow("Y");
                         vmContainer.setMoveOrder(vmContainer.getCwoManualSeqNoTemp());
                         vmContainer.setWorkFirst(CWPDomain.YES);
+                        vmContainer.setCwoCraneNoTemp(orderCraneMap.get(i));
                     }
                 }
             }

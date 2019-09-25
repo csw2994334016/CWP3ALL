@@ -268,6 +268,18 @@ public class Evaluator {
                     dpCraneSelectBay.getDpFeatureList().add(new DPFeature(CWPDesc.mustSelectByCrane.getCode(), CWPDesc.mustSelectByCrane.getDesc()));
                 }
             }
+            // 如果倍位有被锁定的桥机号，则该倍位不能被其它桥机选择
+            if (cwpBay.getDpLockByCraneNo() != null) {
+                for (CWPCrane cwpCrane : cwpCranes) {
+                    if (!cwpCrane.getCraneNo().equals(cwpBay.getDpLockByCraneNo())) {
+                        DPCraneSelectBay dpCraneSelectBay = DPCraneSelectBay.getDpCraneSelectBayByPair(dpCraneSelectBayList, new DPPair<>(cwpCrane.getCraneNo(), cwpBay.getBayNo()));
+                        if (dpCraneSelectBay != null && dpCraneSelectBay.getDpFeatureList().get(0).getCode() > 1) {
+                            dpCraneSelectBay.getDpFeatureList().clear();
+                            dpCraneSelectBay.getDpFeatureList().add(new DPFeature(CWPDesc.nonLockBayCrane.getCode(), CWPDesc.nonLockBayCrane.getDesc()));
+                        }
+                    }
+                }
+            }
         }
         // 人工锁定的桥机作业块与桥机当前累计作业进行对比，是不是到达桥机锁定作业块的倍位
         for (CWPCrane cwpCrane : cwpCranes) {

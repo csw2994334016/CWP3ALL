@@ -803,7 +803,6 @@ public class ParseDataServiceImpl implements ParseDataService {
                         //人工指定作业工艺
                         vmContainer.setCwoManualWorkflowTemp(workFlow);
                         vmContainer.setCwoManualSeqNoTemp(moveOrder);
-                        vmContainer.setCwoCraneNoTemp(smartVesselContainerInfo.getCraneNo());
                         if ("Y".equals(smartVesselContainerInfo.getCwoManualWorkflow())) {
                             if (StringUtil.isNotBlank(workFlow)) {
                                 vmContainer.setWorkFlow(PublicMethod.getWorkFlowStr1(workFlow, size));
