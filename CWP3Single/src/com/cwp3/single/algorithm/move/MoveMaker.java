@@ -501,7 +501,7 @@ public class MoveMaker {
         if (CWPDomain.YES.equals(vmContainer.getCwoManualWorkflow()) && CWPCraneDomain.CT_QUAD20.equals(vmContainer.getWorkFlow())) {
             VMSlot vmSlotSide = structureData.getSideVMSlot(vmSlot, oddOrEven);
             VMContainer vmContainerSide = workingData.getVMContainerByVMSlot(vmSlotSide, dlType);
-            if (vmContainerSide != null && CWPDomain.YES.equals(vmContainerSide.getCwoManualWorkflow()) && CWPCraneDomain.CT_DUAL40.equals(vmContainerSide.getWorkFlow())) {
+            if (vmContainerSide != null && CWPDomain.YES.equals(vmContainerSide.getCwoManualWorkflow()) && CWPCraneDomain.CT_QUAD20.equals(vmContainerSide.getWorkFlow())) {
                 vmSlotSet.add(vmSlot);
                 vmSlotSet.add(vmSlotSide);
                 VMSlot vmSlotPair = structureData.getPairVMSlot(vmSlot);
@@ -524,6 +524,7 @@ public class MoveMaker {
         }
         workMove.setWorkFirst(vmContainer.getWorkFirst());
         workMove.setWorkFirstOrder(vmContainer.getMoveOrder());
+        workMove.setCwoCraneNo(vmContainer.getCwoCraneNoTemp());
         // 根据工艺设置Move属性
         if (PublicMethod.isSingleWorkFlow(vmContainer.getWorkFlow())) {
             long wt = PublicMethod.getCntWorkTime(vmSlot, vmContainer, workingData.getCwpConfig(), dlType);
@@ -643,6 +644,7 @@ public class MoveMaker {
                     workMove1.setBayNo(workMove.getBayNo());
                     workMove1.setTierNo(workMove.getTierNo());
                     workMove1.setHcSeq(workMove.getHcSeq());
+                    workMove1.setCwoCraneNo(workMove.getCwoCraneNo());
                     addWorkMoveToMap(workMove1, discDoubleWorkMoveMap);
                 }
             }

@@ -27,6 +27,7 @@ public class WorkMove implements Serializable {
     private String workFirst; // 优先作业的move
     private Long workFirstOrder; // 优先作业顺序
     private String hcWorkFlow; // 舱盖板move专用，表示舱盖板使用什么吊具作业：S4/D4
+    private String cwoCraneNo; // 人工锁定作业块，move指定给该桥机作业
 
     private Long moveOrder; //作业顺序
     private Date planStartTime; //计划开始时间
@@ -99,6 +100,7 @@ public class WorkMove implements Serializable {
         workMoveCopy.setWorkFirst(workFirst);
         workMoveCopy.setWorkFirstOrder(workFirstOrder);
         workMoveCopy.setHcWorkFlow(hcWorkFlow);
+        workMoveCopy.setCwoCraneNo(cwoCraneNo);
         return workMoveCopy;
     }
 
@@ -296,5 +298,13 @@ public class WorkMove implements Serializable {
 
     public void setHcWorkFlow(String hcWorkFlow) {
         this.hcWorkFlow = hcWorkFlow;
+    }
+
+    public String getCwoCraneNo() {
+        return cwoCraneNo;
+    }
+
+    public void setCwoCraneNo(String cwoCraneNo) {
+        this.cwoCraneNo = cwoCraneNo;
     }
 }

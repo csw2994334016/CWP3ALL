@@ -374,6 +374,7 @@ public class CwpDataMethod {
                         workMove1.setTierNo(workMove.getTierNo());
                         workMove1.setHcSeq(workMove.getHcSeq());
                         workMove1.setMoveOrder(workMove.getMoveOrder());
+                        workMove1.setCwoCraneNo(workMove.getCwoCraneNo());
                         apartWorkMoveList.add(workMove1);
                         newWorkMoveList.add(workMove1);
                         allWt += wt1;
@@ -415,6 +416,9 @@ public class CwpDataMethod {
         if (workMoveList.size() > 0) {
             long firstOrder = workMoveList.get(0).getMoveOrder();
             for (WorkMove workMove : workMoveList) {
+                if (cwpBay.getDpLockByCraneNo() != null && workMove.getCwoCraneNo() != null && !cwpBay.getDpLockByCraneNo().equals(workMove.getCwoCraneNo())) {
+                    break;
+                }
                 WorkMove workMove1 = cwpData.getMoveData().getWorkMoveByVMSlot(workMove.getOneVMSlot(), workMove.getDlType());
                 if (wt < realWorkTime) {
                     long curCost = workMove1.getWorkTime();

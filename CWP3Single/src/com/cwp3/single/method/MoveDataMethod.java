@@ -317,6 +317,7 @@ public class MoveDataMethod {
             workMoveCopy.setWorkFirst(workMove.getWorkFirst());
             workMoveCopy.setWorkFirstOrder(workMove.getWorkFirstOrder());
             workMoveCopy.setHcWorkFlow(workMove.getHcWorkFlow());
+            workMoveCopy.setCwoCraneNo(workMove.getCwoCraneNo());
             workMoveCopy.setMoveOrder(workMove.getMoveOrder());
             workMoveCopy.setPlanStartTime(workMove.getPlanStartTime());
             workMoveCopy.setPlanEndTime(workMove.getPlanEndTime());

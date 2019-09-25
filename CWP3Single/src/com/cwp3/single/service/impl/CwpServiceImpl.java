@@ -30,8 +30,8 @@ public class CwpServiceImpl implements CwpService {
         workingData.setCwpType(CWPDomain.CWP_TYPE_PLAN);
         workingData.getLogger().logInfo("调用单船CWP算法，对船舶(berthId:" + berthId + ")进行CWP计划安排(" + workingData.getCwpType() + ")。");
         hatchBlockService.makeHatchBlock(allRuntimeData, berthId);
-        moveService.makeWorkFlow(allRuntimeData, berthId);
         lockWorkBlockService.analyzeLockWorkBlock(allRuntimeData, berthId);
+        moveService.makeWorkFlow(allRuntimeData, berthId);
         try {
             CwpProcess1 cwpProcess = new CwpProcess1();
             cwpProcess.processCwp(allRuntimeData, berthId);

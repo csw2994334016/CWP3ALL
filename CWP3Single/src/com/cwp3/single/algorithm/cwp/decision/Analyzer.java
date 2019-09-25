@@ -84,9 +84,8 @@ public class Analyzer {
             if (allWorkMoveList.size() > 0) {
                 for (WorkMove workMove : allWorkMoveList) {
                     if (CWPDomain.MOVE_TYPE_CNT.equals(workMove.getMoveType())) {
-                        VMContainer vmContainer = cwpData.getWorkingData().getVMContainerByVMSlot(workMove.getOneVMSlot(), workMove.getDlType());
-                        if (vmContainer.getCwoCraneNoTemp() != null) {
-                            cwpBay.setDpLockByCraneNo(vmContainer.getCwoCraneNoTemp());
+                        if (workMove.getCwoCraneNo() != null) {
+                            cwpBay.setDpLockByCraneNo(workMove.getCwoCraneNo());
                         }
                         break;
                     }
@@ -99,8 +98,7 @@ public class Analyzer {
                     }
                 }
                 if (cwpBay.getDpLockByCraneNo() != null && CWPDomain.MOVE_TYPE_CNT.equals(workMove.getMoveType())) {
-                    VMContainer vmContainer = cwpData.getWorkingData().getVMContainerByVMSlot(workMove.getOneVMSlot(), workMove.getDlType());
-                    if (vmContainer.getCwoCraneNoTemp() != null && !cwpBay.getDpLockByCraneNo().equals(vmContainer.getCwoCraneNoTemp())) {
+                    if (workMove.getCwoCraneNo() != null && !cwpBay.getDpLockByCraneNo().equals(workMove.getCwoCraneNo())) { // 箱子被桥机锁定，则需要判断与第一关箱子是否为同一部桥机
                         break;
                     }
                 }

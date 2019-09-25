@@ -50,7 +50,7 @@ public class LockWorkBlockServiceImpl implements LockWorkBlockService {
                 }
             });
             int amount = 0;
-            Map<Integer, String> orderCraneMap = new HashMap<>();
+            Map<Integer, String> orderCraneMap = new LinkedHashMap<>();
             for (WorkBlock workBlock : workBlockList) {
                 for (int i = amount; i < amount + workBlock.getPlanAmount(); i++) {
                     orderCraneMap.put(i, workBlock.getCraneNo());

@@ -30,8 +30,12 @@ public class LoadDiscFirstStrategy  extends Strategy{
 
     @Override
     public WorkMove getFirstWorkMove(String curWorkFlow, int curTierNo, List<WorkMove> delayWorkMoveList) {
+        // 如果有舱盖板，则优先作业舱盖板
         List<WorkMove> workMoveList = new ArrayList<>();
         for (Map.Entry<Integer, WorkMove> entry : rowNoMoveMap.entrySet()) {
+            if (CWPDomain.MOVE_TYPE_HC.equals(entry.getValue().getMoveType())) {
+                return entry.getValue();
+            }
             if (CWPDomain.YES.equals(entry.getValue().getWorkFirst()) && entry.getValue().getWorkFirstOrder() != null) {
                 workMoveList.add(entry.getValue());
             }
