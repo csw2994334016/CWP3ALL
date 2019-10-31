@@ -259,6 +259,14 @@ public class MoveMaker {
                     workingData.getDiscWorkMoveMap().put(entry.getKey(), entry.getValue());
                 }
             }
+            if (discDoubleWorkMoveMapA.size() > 0) {
+                // 拆分甲板上少于10关的双吊具
+                apartAboveDiscDoubleWorkMove(hatchId, dlType, discDoubleWorkMoveMapA, workingData, structureData);
+                // 将move放入WorkingData中
+                for (Map.Entry<String, WorkMove> entry : discDoubleWorkMoveMapA.entrySet()) {
+                    workingData.getDiscWorkMoveMap().put(entry.getKey(), entry.getValue());
+                }
+            }
             // WorkingData对象存储的卸船双吊具工艺的map需要添加：小倍位作业的move
             for (WorkMove workMove : singleWorkMoveList) {
                 if (CWPDomain.DL_TYPE_DISC.equals(workMove.getDlType()) && (CWPCraneDomain.CT_SINGLE20.equals(workMove.getWorkFlow()) || CWPCraneDomain.CT_TWIN20.equals(workMove.getWorkFlow()))) { // 卸船、20尺单吊具
@@ -615,42 +623,37 @@ public class MoveMaker {
                 }
             }
             // 双吊具move拆成单吊具move
-            for (WorkMove workMove : workMoveSet) {
-                Set<VMSlot> vmSlotSet = workMove.getVmSlotSet();
-                // 排号相同slot形成一个单吊具的move
-                Map<Integer, Set<VMSlot>> vmSlotMap = new HashMap<>();
-                for (VMSlot vmSlot : vmSlotSet) {
-                    if (vmSlotMap.get(vmSlot.getVmPosition().getRowNo()) == null) {
-                        vmSlotMap.put(vmSlot.getVmPosition().getRowNo(), new HashSet<VMSlot>());
-                    }
-                    vmSlotMap.get(vmSlot.getVmPosition().getRowNo()).add(vmSlot);
-                }
-                for (Map.Entry<Integer, Set<VMSlot>> entry : vmSlotMap.entrySet()) {
-                    String workflow = CWPCraneDomain.CT_SINGLE40;
-                    long wt = workingData.getCwpConfig().getSingle40TimeBD();
-                    for (VMSlot vmSlot : entry.getValue()) {
-                        VMContainer vmContainer = workingData.getVMContainerByVMSlot(vmSlot, dlType);
-                        if (vmContainer != null && vmContainer.getSize().startsWith("2")) { // 确定双吊具拆成20尺双箱吊
-                            workflow = CWPCraneDomain.CT_DUAL20;
-                            wt = workingData.getCwpConfig().getDouble20TimeBD();
-                        }
-                    }
-                    WorkMove workMove1 = new WorkMove(workMove.getDlType(), CWPDomain.MOVE_TYPE_CNT);
-                    workMove1.setWorkFlow(workflow);
-                    workMove1.setWorkTime(wt);
-                    workMove1.setHatchId(workMove.getHatchId());
-                    workMove1.setRowNo(entry.getKey());
-                    workMove1.setVmSlotSet(entry.getValue());
-                    workMove1.setBayNo(workMove.getBayNo());
-                    workMove1.setTierNo(workMove.getTierNo());
-                    workMove1.setHcSeq(workMove.getHcSeq());
-                    workMove1.setCwoCraneNo(workMove.getCwoCraneNo());
-                    addWorkMoveToMap(workMove1, discDoubleWorkMoveMap);
-                }
-            }
+            apartDiscDoubleWorkMove(workMoveSet, dlType, discDoubleWorkMoveMap, workingData);
         }
         // 2、分析MoveData中的双吊具move，哪两个箱子组合成双吊具，作业工艺切换总次数最小、切换次数一样时，双吊具关数最多
 
+    }
+
+    private void apartAboveDiscDoubleWorkMove(Long hatchId, String dlType, Map<String, WorkMove> discDoubleWorkMoveMap, WorkingData workingData, StructureData structureData) {
+        // 对该舱大倍位、舱上、卸船、双吊具move重新判断处理：如果连续不满足10关的双吊具拆成单吊具；
+        // 得到舱盖板move，判断舱盖板move是否有单吊具
+        List<WorkMove> workMoveList = getAllAboveDiscD4Q2MoveListByBayNo(discDoubleWorkMoveMap);
+        Set<WorkMove> workMoveSet = new HashSet<>(workMoveList);
+        if (workMoveSet.size() < 10) {
+            // 先去除discWorkMoveMap中的move
+            for (WorkMove workMove : workMoveSet) {
+                for (VMSlot vmSlot : workMove.getVmSlotSet()) {
+                    discDoubleWorkMoveMap.remove(vmSlot.getVmPosition().getVLocation());
+                }
+            }
+            // 双吊具move拆成单吊具move
+            apartDiscDoubleWorkMove(workMoveSet, dlType, discDoubleWorkMoveMap, workingData);
+        }
+    }
+
+    private List<WorkMove> getAllAboveDiscD4Q2MoveListByBayNo(Map<String, WorkMove> discDoubleWorkMoveMap) {
+        List<WorkMove> workMoveList = new ArrayList<>();
+        for (WorkMove workMove : discDoubleWorkMoveMap.values()) {
+            if (workMove.getTierNo() > 50 && (CWPCraneDomain.CT_DUAL40.equals(workMove.getWorkFlow()) || CWPCraneDomain.CT_QUAD20.equals(workMove.getWorkFlow()))) {
+                workMoveList.add(workMove);
+            }
+        }
+        return workMoveList;
     }
 
     private List<WorkMove> getAllBelowDiscD4Q2MoveListByBayNo(Map<String, WorkMove> discDoubleWorkMoveMap) {
@@ -661,6 +664,42 @@ public class MoveMaker {
             }
         }
         return workMoveList;
+    }
+
+    private void apartDiscDoubleWorkMove(Set<WorkMove> workMoveSet, String dlType, Map<String, WorkMove> discDoubleWorkMoveMap, WorkingData workingData) {
+        for (WorkMove workMove : workMoveSet) {
+            Set<VMSlot> vmSlotSet = workMove.getVmSlotSet();
+            // 排号相同slot形成一个单吊具的move
+            Map<Integer, Set<VMSlot>> vmSlotMap = new HashMap<>();
+            for (VMSlot vmSlot : vmSlotSet) {
+                if (vmSlotMap.get(vmSlot.getVmPosition().getRowNo()) == null) {
+                    vmSlotMap.put(vmSlot.getVmPosition().getRowNo(), new HashSet<VMSlot>());
+                }
+                vmSlotMap.get(vmSlot.getVmPosition().getRowNo()).add(vmSlot);
+            }
+            for (Map.Entry<Integer, Set<VMSlot>> entry : vmSlotMap.entrySet()) {
+                String workflow = CWPCraneDomain.CT_SINGLE40;
+                long wt = workingData.getCwpConfig().getSingle40TimeBD();
+                for (VMSlot vmSlot : entry.getValue()) {
+                    VMContainer vmContainer = workingData.getVMContainerByVMSlot(vmSlot, dlType);
+                    if (vmContainer != null && vmContainer.getSize().startsWith("2")) { // 确定双吊具拆成20尺双箱吊
+                        workflow = CWPCraneDomain.CT_DUAL20;
+                        wt = workingData.getCwpConfig().getDouble20TimeBD();
+                    }
+                }
+                WorkMove workMove1 = new WorkMove(workMove.getDlType(), CWPDomain.MOVE_TYPE_CNT);
+                workMove1.setWorkFlow(workflow);
+                workMove1.setWorkTime(wt);
+                workMove1.setHatchId(workMove.getHatchId());
+                workMove1.setRowNo(entry.getKey());
+                workMove1.setVmSlotSet(entry.getValue());
+                workMove1.setBayNo(workMove.getBayNo());
+                workMove1.setTierNo(workMove.getTierNo());
+                workMove1.setHcSeq(workMove.getHcSeq());
+                workMove1.setCwoCraneNo(workMove.getCwoCraneNo());
+                addWorkMoveToMap(workMove1, discDoubleWorkMoveMap);
+            }
+        }
     }
 
     private void addWorkMoveToMap(WorkMove workMove, Map<String, WorkMove> discDoubleWorkMoveMap) {
