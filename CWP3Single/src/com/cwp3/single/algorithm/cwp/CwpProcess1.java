@@ -161,50 +161,6 @@ public class CwpProcess1 {
         }
     }
 
-//    private void search(CwpData cwpData, DPResult dpResult, int depth, CwpDataMethod cwpDataMethod, Analyzer analyzer, Evaluator evaluator, Dynamic dynamic) {
-//        Logger logger = cwpData.getWorkingData().getLogger();
-//        logger.logDebug("第" + depth + "次search:--------------------------");
-//
-//        cwpDataMethod.computeCurrentWorkTime(dpResult, cwpData);
-//
-//        analyzer.analyzeCwpBay(cwpData);
-//        LogPrintMethod.printCurBayWorkTime(cwpData.getAllCWPBays(), logger);
-//
-//        boolean finish = true;
-//        if (finish(depth, cwpData)) {
-//            finish = false;
-//        }
-//        if (finish) {
-//            return;
-//        }
-//
-//        analyzer.analyzeCwpCrane(cwpData);
-//        LogPrintMethod.printSelectedCrane(cwpData.getDpCwpCraneList(), logger);
-//
-//        if (evaluator.invalidBranch(cwpData)) {
-//            return;
-//        }
-//
-//        DPBranch dpBranch = evaluator.getCurDpBranch(cwpData);
-//        cwpData.setDpCraneSelectBays(dpBranch.getDpCraneSelectBays());
-//
-//        LogPrintMethod.printCraneSelectBayInfo(cwpData, logger);
-//        DPResult dpResultNew = dynamic.cwpKernel(cwpData.getDpCwpCraneList(), cwpData.getAllCWPBays(), cwpData);
-//
-//        long minWorkTime = CraneMethod.obtainMinWorkTime(dpResultNew, cwpData);
-//
-//        if (minWorkTime > 0) { // todo: 如果minWorkTime==0，则断定为出现了加减桥机信息，继续下次决策
-//            long realWorkTime = realWork(dpResultNew, minWorkTime, cwpData, cwpDataMethod);
-//            if (!cwpData.getFirstDoCwp() && realWorkTime == 0) { // todo: 非第一次作业、且没有进行实际作业，断定为异常的决策，结束分支？
-//                cwpData.setDpInvalidateBranch(CWPDomain.EXCEPTION_BRANCH);
-//                return;
-//            }
-//        }
-//
-//        setDpResult(dpResultNew, cwpData);
-//        search(cwpData, dpResultNew, depth + 1, cwpDataMethod, analyzer, evaluator, dynamic);
-//    }
-
     private void multipleSearch(CwpData cwpData, DPResult dpResult, int depth, CwpDataMethod cwpDataMethod, Analyzer analyzer, Evaluator evaluator, Dynamic dynamic) {
         Logger logger = cwpData.getWorkingData().getLogger();
         logger.logDebug("第" + depth + "次search:--------------------------");
@@ -250,7 +206,7 @@ public class CwpProcess1 {
             subSearch(cwpDataCopy, dpResultNew, 1, cwpDataMethod, analyzer, evaluator, dynamic);
         }
 
-        CwpData cwpDataBest = cwpDataList.get(0);
+        CwpData cwpDataBest = evaluator.getDepthBestResult(cwpDataList);
         setCwpData(cwpDataBest, cwpData);
 
         multipleSearch(cwpData, cwpData.getDpResult(), depth + 1, cwpDataMethod, analyzer, evaluator, dynamic);
@@ -258,11 +214,12 @@ public class CwpProcess1 {
 
     private void subSearch(CwpData cwpData, DPResult dpResult, int depth, CwpDataMethod cwpDataMethod, Analyzer analyzer, Evaluator evaluator, Dynamic dynamic) {
         Logger logger = cwpData.getWorkingData().getLogger();
-        logger.logDebug("——" + depth + ":--------------------------");
 
-        if (depth == 3) { // 深度为5
+        if (cwpData.getDpChangeHatchNumber() == 1) { // 深度为5
+            logger.logDebug("");
             return;
         }
+        logger.logDebug("——" + depth + ":------------");
 
         DPResult dpResultNew = search(cwpData, dpResult, depth, cwpDataMethod, analyzer, evaluator, dynamic);
         if (dpResultNew == null) {
@@ -341,6 +298,7 @@ public class CwpProcess1 {
         cwpData.setDpMoveNumber(cwpDataBest.getDpMoveNumber());
         cwpData.setDpInvalidateBranch(cwpDataBest.getDpInvalidateBranch());
         cwpData.setDpExceptionBranch(cwpDataBest.getDpExceptionBranch());
+        cwpData.setDpChangeHatchNumber(0);
     }
 
     private void setDpResult(DPResult dpResultNew, CwpData cwpData) {
@@ -479,6 +437,7 @@ public class CwpProcess1 {
             cwpCrane.setDpEndWorkTime(maxEndWorkTime);
         }
         long maxRealWorkTime = 0;
+        boolean hatchWtCompletedFlag = false;
         for (DPPair dpPair : dpResult.getDpTraceBack()) {
             CWPCrane cwpCrane = PublicMethod.getCwpCraneByCraneNo((String) dpPair.getFirst(), cwpCranes);
             CWPBay cwpBay = cwpData.getCWPBayByBayNo((Integer) dpPair.getSecond());
@@ -500,11 +459,19 @@ public class CwpProcess1 {
                         cwpCrane.setDpWorkTimeTo(cwpCrane.getDpWorkTimeTo() - realWorkTime);
                     }
                 }
+                // 该次决策舱作业量被做完的次数
+                List<CWPBay> cwpBayList = cwpData.getCwpHatchBayMap().get(cwpData.getStructureData().getVMHatchByHatchId(cwpBay.getHatchId()).getBayNoD());
+                if (PublicMethod.getCurTotalWorkTime(cwpBayList) - realWorkTime <= 0) {
+                    hatchWtCompletedFlag = true;
+                }
             }
         }
         cwpData.getWorkingData().getLogger().logDebug("决策作业时间：" + maxRealWorkTime);
         boolean isFirstRealWork = !(maxRealWorkTime > 0) && cwpData.getFirstDoCwp();
         cwpData.setFirstDoCwp(isFirstRealWork);
+        if (hatchWtCompletedFlag) {
+            cwpData.setDpChangeHatchNumber(cwpData.getDpChangeHatchNumber() + 1);
+        }
         //设置CWPData全局时间
         long maxCurrentTime = Long.MIN_VALUE;
         for (CWPCrane cwpCrane : cwpCranes) { //每部桥机的作业时间会有偏差，一个move的时间

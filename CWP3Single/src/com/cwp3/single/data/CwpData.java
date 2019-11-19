@@ -38,6 +38,7 @@ public class CwpData {
     private Map<Integer, List<CWPBay>> cwpHatchBayMap; // <bayNoD, 一般3个倍位>，每次analyzeCwpBay方法都会重新计算
     private Map<String, List<CWPCrane>> dpFirstCwpCraneMap; // Analyzer->Evaluator
     private Long evaluateTime;
+    private Integer dpChangeHatchNumber; // 换舱次数
 
     public CwpData(WorkingData workingData, StructureData structureData) {
         this.workingData = workingData;
@@ -53,6 +54,7 @@ public class CwpData {
         dpCraneSelectBays = new ArrayList<>();
         dpFirstCwpCraneMap = new LinkedHashMap<>();
         dpMoveNumber = 0;
+        dpChangeHatchNumber = 0;
     }
 
     public WorkingData getWorkingData() {
@@ -231,5 +233,13 @@ public class CwpData {
 
     public void setDpExceptionBranch(String dpExceptionBranch) {
         this.dpExceptionBranch = dpExceptionBranch;
+    }
+
+    public Integer getDpChangeHatchNumber() {
+        return dpChangeHatchNumber;
+    }
+
+    public void setDpChangeHatchNumber(Integer dpChangeHatchNumber) {
+        this.dpChangeHatchNumber = dpChangeHatchNumber;
     }
 }

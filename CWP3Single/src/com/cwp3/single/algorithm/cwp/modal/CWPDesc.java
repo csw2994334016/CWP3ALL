@@ -15,17 +15,18 @@ public enum CWPDesc {
     hatchBayDelay(1, "同一个舱内倍位推迟作业更合适"),
     hatchBayFirst(3, "同一个舱内倍位优先作业更合适"),
 
-    firstSelectFactor(3, "第一次决策"),
+    firstSelectFactor(4, "第一次决策"),
 
     splitRoad(3, "劈路作业原则"),
     specialBay(3, "尽量让桥机做完驾驶台/烟囱同边的倍位"),
 
     preAvoidKeyRoad(4, "预判该倍位如果不被选择作业，会形成重点路"),
+    keepFirstCraneWork(4, "保持第一部桥机继续作业"),
 
     lastSelectHatch(4, "桥机保持在上次选择的舱中作业"),
     steppingCntFirst(5, "同一个舱内垫脚箱可以连续做完时，优先选择垫脚作业"),
 
-    mustSelectByCrane(6, "避免形成新的重点路"),
+    mustSelectByCrane(6, "该倍位必须由该桥机作业（避免形成新的重点路）"),
 
     bayLockByCrane(7, "人工锁定桥机作业倍位，优先级最高");
 

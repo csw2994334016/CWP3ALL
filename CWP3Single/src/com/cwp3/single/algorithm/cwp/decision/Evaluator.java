@@ -29,98 +29,49 @@ public class Evaluator {
             cwpData.getWorkingData().getLogger().logDebug("所有分支：" + n);
 
             List<List<DPPair>> dpPairLists = new ArrayList<>();
-            CWPCrane cwpCrane1 = getFirstUsableCrane(cwpCranes);
-            if (cwpCrane1 != null) {
+
+            CWPCrane cwpCrane1 = cwpCranes.get(0);
+            if (cwpCrane1.getFirstWorkBayNo() != null) {
+                List<DPPair> dpPairList1 = new ArrayList<>();
+                DPPair dpPair1 = new DPPair<>(cwpCrane1.getCraneNo(), cwpCrane1.getFirstWorkBayNo());
+                dpPairList1.add(dpPair1);
+                dpPairLists.add(dpPairList1);
+            } else {
                 for (Integer bayNo : cwpCrane1.getDpSelectBays()) {
                     List<DPPair> dpPairList1 = new ArrayList<>();
                     DPPair dpPair1 = new DPPair<>(cwpCrane1.getCraneNo(), bayNo);
                     dpPairList1.add(dpPair1);
                     dpPairLists.add(dpPairList1);
                 }
-                for (int i = 1; i < cwpCranes.size(); i++) {
-                    CWPCrane cwpCrane = cwpCranes.get(i);
-                    if (cwpCrane.getFirstWorkBayNo() == null) {
-                        List<List<DPPair>> tempDpPairLists = new ArrayList<>();
-                        for (List<DPPair> dpPairList : dpPairLists) {
-                            for (Integer bayNo : cwpCrane.getDpSelectBays()) {
-                                Integer bayNo1 = (Integer) dpPairList.get(dpPairList.size() - 1).getSecond();
-                                if (!PublicMethod.safeSpanBay(bayNo, bayNo1, cwpData)) {
-                                    List<DPPair> tempDpPairList = PublicMethod.copyDpPairList(dpPairList);
-                                    DPPair dpPair = new DPPair<>(cwpCrane.getCraneNo(), bayNo);
-                                    tempDpPairList.add(dpPair);
-                                    tempDpPairLists.add(tempDpPairList);
-                                }
-                            }
-                        }
-                        if (tempDpPairLists.size() > 0) {
-                            dpPairLists = tempDpPairLists;
+            }
+            for (int i = 1; i < cwpCranes.size(); i++) {
+                CWPCrane cwpCrane = cwpCranes.get(i);
+                List<Integer> bayNoList = new ArrayList<>();
+                if (cwpCrane.getFirstWorkBayNo() != null) {
+                    bayNoList.add(cwpCrane.getFirstWorkBayNo());
+                } else {
+                    bayNoList.addAll(cwpCrane.getDpSelectBays());
+                }
+                List<List<DPPair>> tempDpPairLists = new ArrayList<>();
+                for (List<DPPair> dpPairList : dpPairLists) {
+                    for (Integer bayNo : bayNoList) {
+                        Integer bayNo1 = (Integer) dpPairList.get(dpPairList.size() - 1).getSecond();
+                        if (!PublicMethod.safeSpanBay(bayNo, bayNo1, cwpData)) {
+                            List<DPPair> tempDpPairList = PublicMethod.copyDpPairList(dpPairList);
+                            DPPair dpPair = new DPPair<>(cwpCrane.getCraneNo(), bayNo);
+                            tempDpPairList.add(dpPair);
+                            tempDpPairLists.add(tempDpPairList);
                         }
                     }
                 }
+                if (tempDpPairLists.size() > 0) {
+                    dpPairLists = tempDpPairLists;
+                }
             }
 
-            //根据上手装卸参数设置，缩减分支
-//            if (CWPDomain.LOAD_PRIOR_LD.equals(cwpData.getWorkingData().getCwpConfig().getLoadPrior())) {
-//                List<List<DPPair>> dpPairListTemp = new ArrayList<>();
-//                for (List<DPPair> dpPairList : dpPairLists) {
-//                    int loadNum = 0, discNum = 0;
-//                    for (DPPair dpPair : dpPairList) {
-//                        CWPBay cwpBay = cwpData.getCWPBayByBayNo((Integer) dpPair.getSecond());
-//                        if (CWPDomain.DL_TYPE_LOAD.equals(cwpBay.getDpLoadOrDisc())) {
-//                            loadNum++;
-//                        }
-//                        if (CWPDomain.DL_TYPE_DISC.equals(cwpBay.getDpLoadOrDisc())) {
-//                            discNum++;
-//                        }
-//                    }
-//                    int h = cwpCranes.size() / 2;
-//                    if (loadNum >= h && discNum >= h) {
-//                        dpPairListTemp.add(dpPairList);
-//                    }
-//                    if (h - 1 > 0 && ((loadNum >= h && discNum >= h - 1) || (loadNum >= h - 1 && discNum >= h))) {
-//                        dpPairListTemp.add(dpPairList);
-//                    }
-//                }
-//                if (dpPairListTemp.size() > 0) {
-//                    dpPairLists.clear();
-//                    dpPairLists = dpPairListTemp;
-//                }
-//            }
+            // 根据上手装卸参数设置，缩减分支
 
             // 如果有桥机第一次选择作业小倍位的单边/垫脚箱，则认为需要旁边桥机的等待
-//            for (List<DPPair> dpPairList : dpPairLists) {
-//                for (int i = 0; i < dpPairList.size(); i++) {
-//                    DPPair dpPair = dpPairList.get(i);
-//                    CWPBay cwpBay = cwpData.getCWPBayByBayNo((Integer) dpPair.getSecond());
-//                    if (PublicMethod.isLittleBay(cwpBay, cwpData)) {
-//                        double safeSpan = cwpData.getStructureData().getVMHatchSpan() * 2;
-//                        String side = PublicMethod.getSideByLittleBay(cwpBay, cwpData);
-//                        if (CWPDomain.R.equals(side)) {
-//                            for (int k = i + 1; k < dpPairList.size(); k++) {
-//                                CWPBay cwpBay1 = cwpData.getCWPBayByBayNo((Integer) dpPairList.get(k).getSecond());
-//                                double distance = Math.abs(CalculateUtil.sub(cwpBay1.getWorkPosition(), cwpBay.getWorkPosition()));
-//                                if (distance < safeSpan * (k - i)) {
-//                                    CWPCrane cwpCrane = PublicMethod.getCwpCraneByCraneNo((String) dpPairList.get(k).getFirst(), cwpCranes);
-//                                    if (cwpCrane != null) {
-//                                        cwpCrane.setDpWait(true);
-//                                    }
-//                                }
-//                            }
-//                        } else {
-//                            for (int k = i - 1; k >= 0; k--) {
-//                                CWPBay cwpBay1 = cwpData.getCWPBayByBayNo((Integer) dpPairList.get(k).getSecond());
-//                                double distance = Math.abs(CalculateUtil.sub(cwpBay1.getWorkPosition(), cwpBay.getWorkPosition()));
-//                                if (distance <= safeSpan * (k - i)) {
-//                                    CWPCrane cwpCrane = PublicMethod.getCwpCraneByCraneNo((String) dpPairList.get(k).getFirst(), cwpCranes);
-//                                    if (cwpCrane != null) {
-//                                        cwpCrane.setDpWait(true);
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
 
             //1、缩减分支，预演推算由于开路舱位，导致后续：桥机等待、产生安全距离的情况
 
@@ -131,18 +82,10 @@ public class Evaluator {
                 for (CWPBay cwpBay : cwpBays) {
                     DPCraneSelectBay dpCraneSelectBay = createDPCraneSelectBay(cwpCrane, cwpBay);
                     if (cwpBay.getDpAvailableWorkTime() > 0) {
-                        if (cwpCrane.getFirstWorkBayNo() != null) { // 人工干预开工倍位
-                            if (cwpBay.getBayNo().equals(cwpCrane.getFirstWorkBayNo())) {
-                                dpCraneSelectBay.setDpFeature(new DPFeature(CWPDesc.inWorkRange.getCode(), CWPDesc.inWorkRange.getDesc()));
-                            } else {
-                                dpCraneSelectBay.setDpFeature(new DPFeature(CWPDesc.outWorkRange.getCode(), CWPDesc.outWorkRange.getDesc()));
-                            }
+                        if (cwpCrane.getDpCurCanSelectBays().contains(cwpBay.getBayNo())) {
+                            dpCraneSelectBay.setDpFeature(new DPFeature(CWPDesc.inWorkRange.getCode(), CWPDesc.inWorkRange.getDesc()));
                         } else {
-                            if (cwpCrane.getDpCurCanSelectBays().contains(cwpBay.getBayNo())) {
-                                dpCraneSelectBay.setDpFeature(new DPFeature(CWPDesc.inWorkRange.getCode(), CWPDesc.inWorkRange.getDesc()));
-                            } else {
-                                dpCraneSelectBay.setDpFeature(new DPFeature(CWPDesc.outWorkRange.getCode(), CWPDesc.outWorkRange.getDesc()));
-                            }
+                            dpCraneSelectBay.setDpFeature(new DPFeature(CWPDesc.outWorkRange.getCode(), CWPDesc.outWorkRange.getDesc()));
                         }
                     } else {
                         dpCraneSelectBay.setDpFeature(new DPFeature(CWPDesc.canNotWork.getCode(), CWPDesc.canNotWork.getDesc()));
@@ -173,6 +116,27 @@ public class Evaluator {
                         dpBranch.getDpCraneSelectBays().add(dpCraneSelectBay);
                     }
                 }
+                for (DPCraneSelectBay dpCraneSelectBay : dpBranch.getDpCraneSelectBays()) {
+                    if (dpCraneSelectBay.getDpFeature().getCode() >= 2) {
+                        CWPCrane cwpCrane11 = PublicMethod.getCwpCraneByCraneNo((String) dpCraneSelectBay.getDpPair().getFirst(), cwpCranes);
+                        CWPBay cwpBay1 = cwpData.getCWPBayByBayNo((Integer) dpCraneSelectBay.getDpPair().getSecond());
+                        if (hatchBayDelay(cwpCrane11, cwpBay1, cwpData)) {
+                            // 第一次决策，如果倍位作业需要推迟，对应该舱其它倍位作业量需要提升一个优先级
+                            if (dpCraneSelectBay.getDpFeature().getDesc().equals(CWPDesc.firstSelectFactor.getDesc())) {
+                                dpCraneSelectBay.setDpFeature(new DPFeature(CWPDesc.inWorkRange.getCode(), CWPDesc.inWorkRange.getDesc()));
+                                // 遍历该舱的其它倍位
+                                for (Integer bayNo : cwpData.getStructureData().getVMHatchByHatchId(cwpBay1.getHatchId()).getAllBayNos()) {
+                                    if (!bayNo.equals(cwpBay1.getBayNo())) {
+                                        DPCraneSelectBay dpCraneSelectBay1 = DPCraneSelectBay.getDpCraneSelectBayByPair(dpBranch.getDpCraneSelectBays(), new DPPair<>((String) dpCraneSelectBay.getDpPair().getFirst(), bayNo));
+                                        if (dpCraneSelectBay1 != null && dpCraneSelectBay1.getDpFeature().getCode() >= 2) {
+                                            dpCraneSelectBay1.setDpFeature(new DPFeature(CWPDesc.hatchBayFirst.getCode(), CWPDesc.hatchBayFirst.getDesc()));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 List<CWPCrane> cwpCraneList1 = PublicMethod.copyCwpCraneList(cwpCranes);
                 dpBranch.setDpStrategyType(entry.getKey());
                 dpBranch.setDpCwpCraneList(cwpCraneList1);
@@ -186,17 +150,41 @@ public class Evaluator {
     public List<DPBranch> getCurDpBranchList(CwpData cwpData) {
         List<DPCraneSelectBay> dpCraneSelectBayList = getCurDpCraneSelectBayList(cwpData);
         List<DPBranch> dpBranchList = new ArrayList<>();
-        List<DPCraneSelectBay> dpCraneSelectBays = new ArrayList<>();
+        List<DPCraneSelectBay> dpCraneSelectBays1 = new ArrayList<>();
         for (DPCraneSelectBay dpCraneSelectBay : dpCraneSelectBayList) {
+            dpCraneSelectBay.setDpFeature(dpCraneSelectBay.getDpFeatureList().get(0));
             if (dpCraneSelectBay.getDpFeatureList().size() > 1) {
-                dpCraneSelectBays.add(dpCraneSelectBay);
+                DPCraneSelectBay dpCraneSelectBay1 = dpCraneSelectBay.deepCopy();
+                dpCraneSelectBay1.setDpFeature(dpCraneSelectBay.getDpFeatureList().get(1));
+                dpCraneSelectBays1.add(dpCraneSelectBay1);
             }
         }
-        if (dpCraneSelectBays.size() > 0) {
-
+        if (dpCraneSelectBays1.size() > 0) { // 桥机选择倍位特征值有多个可能性，每个可能性一个分支
+            for (DPCraneSelectBay dpCraneSelectBay1 : dpCraneSelectBays1) {
+                DPBranch dpBranch = new DPBranch();
+                List<CWPCrane> cwpCraneList1 = PublicMethod.copyCwpCraneList(cwpData.getDpCwpCraneList());
+                dpBranch.setDpStrategyType(cwpData.getDpStrategyType());
+                dpBranch.setDpCwpCraneList(cwpCraneList1);
+                for (DPCraneSelectBay dpCraneSelectBay : dpCraneSelectBayList) {
+                    if (dpCraneSelectBay.equalsWithPair(dpCraneSelectBay1.getDpPair())) {
+                        dpBranch.getDpCraneSelectBays().add(dpCraneSelectBay1);
+                    } else {
+                        dpBranch.getDpCraneSelectBays().add(dpCraneSelectBay);
+                    }
+                }
+                dpBranchList.add(dpBranch);
+            }
         } else {
-            dpBranchList.add(getCurDpBranch(cwpData));
+            DPBranch dpBranch = new DPBranch();
+            List<CWPCrane> cwpCraneList1 = PublicMethod.copyCwpCraneList(cwpData.getDpCwpCraneList());
+            dpBranch.setDpStrategyType(cwpData.getDpStrategyType());
+            dpBranch.setDpCwpCraneList(cwpCraneList1);
+            for (DPCraneSelectBay dpCraneSelectBay : dpCraneSelectBayList) {
+                dpBranch.getDpCraneSelectBays().add(dpCraneSelectBay);
+            }
+            dpBranchList.add(dpBranch);
         }
+        cwpData.getWorkingData().getLogger().logInfo("Branch number：" + dpBranchList.size());
         return dpBranchList;
     }
 
@@ -227,9 +215,6 @@ public class Evaluator {
                         if (hatchBayDelay(cwpCrane, cwpBay, cwpData)) {
                             dpFeature = new DPFeature(CWPDesc.hatchBayDelay.getCode(), CWPDesc.hatchBayDelay.getDesc());
                         }
-                        if (hatchBayFirst(cwpCrane, cwpBay, cwpData)) {
-                            dpFeature = new DPFeature(CWPDesc.hatchBayFirst.getCode(), CWPDesc.hatchBayFirst.getDesc());
-                        }
                         if (splitRoad(cwpCrane, cwpBay, cwpData)) {
                             dpFeature = new DPFeature(CWPDesc.splitRoad.getCode(), CWPDesc.splitRoad.getDesc());
                         }
@@ -246,8 +231,8 @@ public class Evaluator {
                             dpFeature = new DPFeature(CWPDesc.reStowCntDelay.getCode(), CWPDesc.reStowCntDelay.getDesc());
                         }
                         dpCraneSelectBay.getDpFeatureList().add(dpFeature);
-                        // 是否开分支考虑，桥机选择倍位第二特征
-                        if (preAvoidKeyRoad(cwpCrane, cwpBay, dpFeature, cwpData)) {
+                        // 开分支考虑，桥机选择倍位第二特征
+                        if (craneDividedBay(cwpCrane, cwpBay, dpFeature, cwpData)) {
                             dpCraneSelectBay.getDpFeatureList().add(new DPFeature(CWPDesc.preAvoidKeyRoad.getCode(), CWPDesc.preAvoidKeyRoad.getDesc()));
                         }
                     } else {
@@ -327,26 +312,27 @@ public class Evaluator {
 
     private boolean hatchBayDelay(CWPCrane cwpCrane, CWPBay cwpBay, CwpData cwpData) {
         Integer bayNoD = cwpData.getStructureData().getVMHatchByHatchId(cwpBay.getHatchId()).getBayNoD();
-        //同一个舱内大倍位置推迟
-        if (cwpBay.getBayNo().equals(bayNoD)) {
-            for (Integer bayNo1 : cwpData.getStructureData().getVMHatchByHatchId(cwpBay.getHatchId()).getBayNos()) {
-                if (!cwpBay.getBayNo().equals(bayNo1)) {
-                    CWPBay cwpBay1 = cwpData.getCWPBayByBayNo(bayNo1);
-                    if (cwpBay1.getDpAvailableWorkTime() > 0 && cwpBay1.getDpAvailableWorkTime().equals(cwpBay1.getDpCurrentTotalWorkTime())) {
+        // 同一个舱内大倍位置推迟
+        if (cwpBay.getBayNo().equals(bayNoD)) { // 需要判断是否推迟作业的是大倍位
+            for (Integer bayNoX : cwpData.getStructureData().getVMHatchByHatchId(cwpBay.getHatchId()).getBayNos()) {
+                if (!cwpBay.getBayNo().equals(bayNoX)) {
+                    CWPBay cwpBayX = cwpData.getCWPBayByBayNo(bayNoX);
+                    // 如果小倍位有可作业量、且可以一次性做完，则大倍位推迟作业
+                    if (cwpBayX.getDpAvailableWorkTime() > 0 && cwpBayX.getDpAvailableWorkTime().equals(cwpBayX.getDpCurrentTotalWorkTime())) {
+                        return true;
+                    }
+                    // 如果小倍位卸船能一次性做完、且大倍位有可作业量，则大倍位推迟作业
+                    if (cwpBayX.getDpAvailableWorkTime() > 0 && cwpBayX.getDpAvailableWorkTime().equals(cwpBayX.getDpAvailableDiscWtX()) && cwpBay.getDpAvailableWorkTime() > 0) {
+                        return true;
+                    }
+                    // 如果大倍位有装船量，且小倍位有卸船量（避免出现单边箱没卸，开始装大倍位箱子），则大倍位推迟作业
+                    if (cwpBay.getDpAvailableLoadWtD() > 0 && cwpBayX.getDpAvailableDiscWtX() > 0) {
                         return true;
                     }
                 }
             }
-        } else { //同一舱内小倍位置推迟，一般是垫脚推迟，等到一次性能做完时选择作业
+        } else { // 同一舱内小倍位置推迟，一般是垫脚推迟，等到一次性能做完时选择作业
             return cwpBay.getDpSteppingAvailableWt() > 0 && !cwpBay.getDpSteppingAvailableWt().equals(cwpBay.getDpSteppingTotalWt());
-        }
-        return false;
-    }
-
-    private boolean hatchBayFirst(CWPCrane cwpCrane, CWPBay cwpBay, CwpData cwpData) {
-        // 小倍位卸船能一次性做完，则优先大倍位作业
-        if (cwpBay.getBayNo() % 2 == 1) {
-            return cwpBay.getDpAvailableWorkTime().equals(cwpBay.getDpAvailableDiscWtX());
         }
         return false;
     }
@@ -427,29 +413,38 @@ public class Evaluator {
         return false;
     }
 
-    private boolean preAvoidKeyRoad(CWPCrane cwpCrane, CWPBay cwpBay, DPFeature dpFeature, CwpData cwpData) {
-        // 当前桥机选择该倍位会有什么好处？？？
-//        List<CWPCrane> cwpCraneList = new ArrayList<>();
-//        for (CWPCrane cwpCrane1 : cwpData.getDpCwpCraneList()) {
-//            if (cwpCrane1.getDpCurCanSelectBays().contains(cwpBay.getBayNo())) {
-//                cwpCraneList.add(cwpCrane1);
-//            }
-//        }
-//        if (cwpCraneList.size() == 2 && cwpCraneList.contains(cwpCrane)) { // 该倍位被两部桥机作业，且其中一部是当前桥机
-//            CWPCrane cwpCraneSide = null;
-//            for (CWPCrane cwpCrane1 : cwpCraneList) {
-//                if (!cwpCrane1.getCraneNo().equals(cwpCrane.getCraneNo())) {
-//                    cwpCraneSide= cwpCrane1;
-//                }
-//            }
-//            if (cwpCraneSide != null) {
-//                // 不能跨越驾驶台/烟囱选择该倍位
-//
-//
-//                return true;
-//            }
-//        }
-
+    private boolean craneDividedBay(CWPCrane cwpCrane, CWPBay cwpBay, DPFeature dpFeature, CwpData cwpData) {
+        boolean hatchWtCompletedFlag = false;
+        Integer bayNoLast = PublicMethod.getSelectBayNoInDpResult(cwpCrane.getCraneNo(), cwpData.getDpResult());
+        if (bayNoLast != null) {
+            CWPBay cwpBayLast = cwpData.getCWPBayByBayNo(bayNoLast);
+            Integer bayNoLastD = cwpData.getStructureData().getVMHatchByHatchId(cwpBayLast.getHatchId()).getBayNoD();
+            List<CWPBay> cwpBayLastList = cwpData.getCwpHatchBayMap().get(bayNoLastD);
+            // 上次舱量已经完成
+            if (cwpBayLastList == null) {
+                hatchWtCompletedFlag = true;
+            }
+            if (hatchWtCompletedFlag) {
+                List<CWPCrane> cwpCraneList = new ArrayList<>();
+                for (CWPCrane cwpCrane1 : cwpData.getDpCwpCraneList()) {
+                    if (cwpBay.getBayNo().equals(cwpData.getStructureData().getVMHatchByHatchId(cwpBay.getHatchId()).getBayNoD()) && cwpCrane1.getDpCurCanSelectBays().contains(cwpBay.getBayNo())) {
+                        cwpCraneList.add(cwpCrane1);
+                    }
+                }
+                if (cwpCraneList.size() == 2 && cwpCraneList.contains(cwpCrane)) { // 该倍位被两部桥机作业，且其中一部是当前桥机
+                    CWPCrane cwpCraneSide = null;
+                    for (CWPCrane cwpCrane1 : cwpCraneList) {
+                        if (!cwpCrane1.getCraneNo().equals(cwpCrane.getCraneNo())) {
+                            cwpCraneSide = cwpCrane1;
+                        }
+                    }
+                    if (cwpCraneSide != null) {
+                        // 不能跨越驾驶台/烟囱选择该倍位
+                        return !dpFeature.getDesc().equals(CWPDesc.specialBay.getDesc());
+                    }
+                }
+            }
+        }
         return false;
     }
 
@@ -545,6 +540,10 @@ public class Evaluator {
             }
         }
         return cwpDataNewList;
+    }
+
+    public CwpData getDepthBestResult(List<CwpData> cwpDataList) {
+        return cwpDataList.get(0);
     }
 
     public List<CwpData> getBestResult(List<CwpData> cwpDataList) {

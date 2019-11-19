@@ -25,10 +25,10 @@ public class CWPBay implements Serializable {
     private Boolean dpSteppingCntFlag; //判断可作业量是全部的垫脚箱，则为true
     private Long dpSteppingAvailableWt;
     private Long dpSteppingTotalWt;
-    private Long dpAvailableDiscWtD; //卸船可作业量
-    private Long dpAvailableLoadWtD; //装船可作业量
-    private Long dpAvailableDiscWtX; //卸船可作业量
-    private Long dpAvailableLoadWtX; //装船可作业量
+    private Long dpAvailableDiscWtD; // 大倍位卸船可作业量
+    private Long dpAvailableLoadWtD; // 大倍位装船可作业量
+    private Long dpAvailableDiscWtX; // 小倍位卸船可作业量
+    private Long dpAvailableLoadWtX; // 小倍位装船可作业量
     private String dpLoadOrDisc;
     private Long reStowCntTimeD; // 卸船出翻舱在这个倍位开始作业的时间
     private Long reStowCntTimeL; // 卸船出翻舱在这个倍位开始作业的时间

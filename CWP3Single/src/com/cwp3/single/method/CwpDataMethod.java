@@ -295,7 +295,9 @@ public class CwpDataMethod {
         cwpDataCopy.setDpMoveNumber(cwpData.getDpMoveNumber());
         cwpDataCopy.setDpInvalidateBranch(cwpData.getDpInvalidateBranch());
         cwpDataCopy.setDpExceptionBranch(cwpData.getDpExceptionBranch());
-        // cwpHatchBayMap、dpFirstCwpCraneMap、evaluateTime只是中间变量，不需要复制
+//        cwpDataCopy.setDpChangeHatchNumber(cwpData.getDpChangeHatchNumber());
+        // changeHatchNumber、cwpHatchBayMap、dpFirstCwpCraneMap、evaluateTime只是中间变量，不需要复制
+        cwpDataCopy.setCwpHatchBayMap(PublicMethod.getCwpHatchBayMap(cwpDataCopy.getAllCWPBays(), cwpDataCopy));
         return cwpDataCopy;
     }
 

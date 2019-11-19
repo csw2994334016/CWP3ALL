@@ -142,11 +142,27 @@ public class Dynamic {
         return dpResult;
     }
 
+//    private boolean better(DPResult cur_dp, DPResult dpResult) {
+//        if (cur_dp.getDpFeatureCode() > dpResult.getDpFeatureCode()) {
+//            return true;
+//        } else {
+//            if (cur_dp.getDpFeatureCode() == dpResult.getDpFeatureCode()) {
+//                return cur_dp.getDpDistance() < dpResult.getDpDistance();
+//            } else {
+//                return false;
+//            }
+//        }
+//    }
+
     private boolean better(DPResult cur_dp, DPResult dpResult) {
         if (cur_dp.getDpFeatureCode() > dpResult.getDpFeatureCode()) {
             return true;
         } else {
             if (cur_dp.getDpFeatureCode() == dpResult.getDpFeatureCode()) {
+                // 如果dpResult的移动距离=0、且cur_dp的移动距离>0，则比较当前决策可以选择的作业量
+                if (cur_dp.getDpDistance() > 0 && dpResult.getDpDistance() == 0) {
+                    return cur_dp.getDpWorkTime().compareTo(dpResult.getDpWorkTime()) >= 0;
+                }
                 return cur_dp.getDpDistance() < dpResult.getDpDistance();
             } else {
                 return false;

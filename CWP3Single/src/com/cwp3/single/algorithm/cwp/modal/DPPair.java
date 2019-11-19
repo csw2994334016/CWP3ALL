@@ -1,6 +1,7 @@
 package com.cwp3.single.algorithm.cwp.modal;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Created by csw on 2017/2/28 16:22.
@@ -25,4 +26,17 @@ public class DPPair<A, B> implements Serializable {
         return second;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DPPair<?, ?> dpPair = (DPPair<?, ?>) o;
+        return Objects.equals(first, dpPair.first) &&
+                Objects.equals(second, dpPair.second);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(first, second);
+    }
 }

@@ -623,7 +623,7 @@ public class Analyzer {
             if (craneNum == 1) {
                 divideByOneCraneNum(cwpCranes, cwpBays, cwpData);
                 divided = true;
-            } else { //craneNum == 2
+            } else if (craneNum == 2) { //craneNum == 2
                 int maxCraneNum = PublicMethod.getMaxCraneNum(cwpBays, cwpData);
                 if (maxCraneNum == craneNum) {
                     divideByMaxCraneNum(cwpCranes, cwpBays, cwpData);
@@ -996,7 +996,81 @@ public class Analyzer {
             availableCraneList.addAll(cwpCraneList);
         }
 
-        return availableCraneList;
+        // 如果当前桥机数目大于最大可放桥机数目，则也需要重新分配桥机作业范围，甚至自动下路（避免刚加进来作业的桥机没有作业倍位可选）
+        List<CWPCrane> availableCraneList1 = new ArrayList<>();
+        if (availableCraneList.size() > availableMaxCraneNum && availableMaxCraneNum > 0 && lastAvailableCraneList.size() > 0) {
+            // 设置桥机当前位置currentCranePosition
+            for (int i = 0; i < availableCraneList.size(); i++) {
+                CWPCrane cwpCrane = availableCraneList.get(i);
+                if (!lastAvailableCraneList.contains(cwpCrane)) {
+                    List<CWPBay> cwpBays = cwpData.getAllCWPBays();
+                    if (cwpCrane.getCraneSeq().compareTo(lastAvailableCraneList.get(0).getCraneSeq()) < 0) {
+                        double po = CalculateUtil.sub(cwpBays.get(0).getWorkPosition(), (availableCraneList.size() - i) * 2 * cwpData.getWorkingData().getCwpConfig().getSafeDistance());
+                        cwpCrane.setCurrentCranePosition(po);
+                    }
+                    if (cwpCrane.getCraneSeq().compareTo(lastAvailableCraneList.get(lastAvailableCraneList.size() - 1).getCraneSeq()) > 0) {
+                        double po = CalculateUtil.add(cwpBays.get(cwpBays.size() - 1).getWorkPosition(), (i + 1) * 2 * cwpData.getWorkingData().getCwpConfig().getSafeDistance());
+                        cwpCrane.setCurrentCranePosition(po);
+                    }
+                }
+            }
+            // 从availableCraneList中找出距离everyRoadBayMap最近的availableMaxCraneNum部桥机
+            double minDistance = Double.MAX_VALUE;
+            for (int n = 0; n <= availableCraneList.size() - availableMaxCraneNum; n++) {
+                double distance = 0;
+                List<CWPCrane> cwpCraneList1 = new ArrayList<>();
+                for (int i = n; i < availableMaxCraneNum + n; i++) {
+                    CWPCrane cwpCrane = availableCraneList.get(i);
+                    double po = cwpCrane.getCraneWorkTime();
+                    CWPBay poBay = cwpData.getCWPBayByBayNo(cwpCrane.getDpCurrentWorkBayNo());
+                    if (poBay != null) {
+                        po = poBay.getWorkPosition();
+                    }
+                    for (Map.Entry<Integer, List<CWPBay>> entry : availableEveryRoadBayMap.entrySet()) {
+                        for (CWPBay cwpBay1 : entry.getValue()) {
+                            distance = CalculateUtil.add(distance, Math.abs(CalculateUtil.sub(po, cwpBay1.getWorkPosition())));
+                        }
+                    }
+                    cwpCraneList1.add(cwpCrane);
+                }
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    availableCraneList1 = cwpCraneList1;
+                }
+            }
+            // 重新划分桥机作业范围
+            for (CWPCrane cwpCrane : availableCraneList1) {
+                cwpCrane.setDpCurMeanWt(0L);
+                cwpCrane.setDpWorkTimeFrom(0L);
+                cwpCrane.setDpWorkTimeTo(0L);
+                cwpCrane.getDpFirstCanSelectBays().clear();
+            }
+            int i = 0;
+            for (Map.Entry<Integer, List<CWPBay>> entry : availableEveryRoadBayMap.entrySet()) {
+                CWPCrane cwpCrane = availableCraneList1.get(i);
+                for (CWPBay cwpBay1 : entry.getValue()) {
+                    cwpCrane.getDpFirstCanSelectBays().add(cwpBay1.getBayNo());
+                }
+                i++;
+            }
+            for (CWPCrane cwpCrane : availableCraneList1) {
+                cwpCrane.setDpWorkBayNoFrom(cwpCrane.getDpFirstCanSelectBays().getFirst());
+                cwpCrane.setDpWorkBayNoTo(cwpCrane.getDpFirstCanSelectBays().getLast());
+            }
+            // 如果桥机被迫自动下路了，则需要把CWPData里的加减桥机信息删除
+            for (CWPCrane cwpCrane : availableCraneList) {
+                if (!availableCraneList1.contains(cwpCrane)) {
+                    CWPCrane cwpCrane1 = cwpData.getCWPCraneByCraneNo(cwpCrane.getCraneNo());
+                    if (cwpCrane1 != null && cwpCrane1.getCwpCraneWorkList().size() > 0) {
+                        cwpCrane1.getCwpCraneWorkList().clear();
+                    }
+                }
+            }
+        } else {
+            availableCraneList1.addAll(availableCraneList);
+        }
+        return availableCraneList1;
+//        return availableCraneList;
     }
 
     private void analyzeCraneMoveRangeWithAvailableCrane(List<CWPCrane> availableCraneList, Map<Integer, List<CWPBay>> everyRoadBayMap, CwpData cwpData) {

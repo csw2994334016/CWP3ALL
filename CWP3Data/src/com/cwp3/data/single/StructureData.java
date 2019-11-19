@@ -48,7 +48,7 @@ public class StructureData {
         Collections.sort(vmHatchList, new Comparator<VMHatch>() {
             @Override
             public int compare(VMHatch o1, VMHatch o2) {
-                return o1.getHatchId().compareTo(o2.getHatchId());
+                return o1.getHatchSeq().compareTo(o2.getHatchSeq());
             }
         });
         return vmHatchList;
