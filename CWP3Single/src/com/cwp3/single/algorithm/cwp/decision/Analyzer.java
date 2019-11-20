@@ -186,6 +186,8 @@ public class Analyzer {
         int maxCraneNum = PublicMethod.getMaxCraneNum(cwpData.getAllCWPBays(), cwpData);
         cwpData.getWorkingData().getLogger().logInfo("Minimum number of crane is: " + minCraneNum + ", maximum number of crane is: " + maxCraneNum);
 
+        // 如果出现桥机
+
         if (CraneMethod.hasCraneAddOrDelete(cwpData.getAllCWPCranes())) {
             // 1、如果有桥机上/下路，应该在第一次划分范围时提前预留作业倍位
             try {
@@ -1082,6 +1084,7 @@ public class Analyzer {
             cwpCrane.setDpWorkTimeTo(0L);
             cwpCrane.getDpFirstCanSelectBays().clear();
         }
+        Map<String, Boolean> craneSelectedMap = new HashMap<>();
         for (Map.Entry<Integer, List<CWPBay>> entry : everyRoadBayMap.entrySet()) {
             CWPCrane cwpCrane = null; // 离倍位作业路距离最近的桥机有哪些
             double minDistance = Double.MAX_VALUE;
@@ -1091,12 +1094,13 @@ public class Analyzer {
                 for (CWPBay cwpBay1 : entry.getValue()) {
                     distance = CalculateUtil.add(distance, Math.abs(CalculateUtil.sub(poBay.getWorkPosition(), cwpBay1.getWorkPosition())));
                 }
-                if (distance < minDistance) {
+                if (craneSelectedMap.get(cwpCrane1.getCraneNo()) == null && distance < minDistance) {
                     minDistance = distance;
                     cwpCrane = cwpCrane1;
                 }
             }
             if (cwpCrane != null) {
+                craneSelectedMap.put(cwpCrane.getCraneNo(), Boolean.TRUE);
                 for (CWPBay cwpBay1 : entry.getValue()) {
                     cwpCrane.getDpFirstCanSelectBays().add(cwpBay1.getBayNo());
                 }

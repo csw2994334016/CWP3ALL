@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class CWPDefaultValue {
 
-    public static final String CWP_VERSION = "CWP3.0.19.8.20";
+    public static final String CWP_VERSION = "CWP3.0.19.11.20";
     public static final String CRANE_ALLOCATION_VERSION = "CRANE_ALLOCATION.2018.11.29";
     public static final String MULTIPLE_CWP_VERSION = "MULTIPLE_CWP.2019.8.12";
     public static boolean outputLogToConsole = true;
