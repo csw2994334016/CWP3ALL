@@ -270,7 +270,7 @@ public class CwpProcess1 {
 
         if (minWorkTime > 0) { // todo: 如果minWorkTime==0，则断定为出现了加减桥机信息，继续下次决策
             long realWorkTime = realWork(dpResultNew, minWorkTime, cwpData, cwpDataMethod);
-            if (!cwpData.getFirstDoCwp() && realWorkTime == 0) { // todo: 非第一次作业、且没有进行实际作业，断定为异常的决策，结束分支？
+            if (!cwpData.getFirstDoCwp() && realWorkTime == 0) { // todo: 非第一次作业、且没有进行实际作业，则断定为异常的决策，结束分支？
                 cwpData.setDpInvalidateBranch(CWPDomain.EXCEPTION_BRANCH);
                 return null;
             }

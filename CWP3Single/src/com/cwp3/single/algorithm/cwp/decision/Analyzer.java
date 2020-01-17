@@ -1023,7 +1023,7 @@ public class Analyzer {
                 List<CWPCrane> cwpCraneList1 = new ArrayList<>();
                 for (int i = n; i < availableMaxCraneNum + n; i++) {
                     CWPCrane cwpCrane = availableCraneList.get(i);
-                    double po = cwpCrane.getCraneWorkTime();
+                    double po = cwpCrane.getCurrentCranePosition();
                     CWPBay poBay = cwpData.getCWPBayByBayNo(cwpCrane.getDpCurrentWorkBayNo());
                     if (poBay != null) {
                         po = poBay.getWorkPosition();
@@ -1072,7 +1072,6 @@ public class Analyzer {
             availableCraneList1.addAll(availableCraneList);
         }
         return availableCraneList1;
-//        return availableCraneList;
     }
 
     private void analyzeCraneMoveRangeWithAvailableCrane(List<CWPCrane> availableCraneList, Map<Integer, List<CWPBay>> everyRoadBayMap, CwpData cwpData) {

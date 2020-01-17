@@ -148,9 +148,14 @@ public class CraneMethod {
                     long a_c = addOrDelTime - curCwpTime;
                     long w_a = workToTime - addOrDelTime;
                     if (addOrDelTime >= curCwpTime && addOrDelTime <= workToTime) {
-                        if (a_c <= CWPDefaultValue.addOrDelCraneTime) {
-                            addOrDelCraneTime = 0;
-                        } else if (w_a <= CWPDefaultValue.addOrDelCraneTime) {
+//                        if (a_c <= CWPDefaultValue.addOrDelCraneTime) {
+//                            addOrDelCraneTime = 0;
+//                        } else if (w_a <= CWPDefaultValue.addOrDelCraneTime) {
+//                            addOrDelCraneTime = minWorkTime;
+//                        } else {
+//                            addOrDelCraneTime = a_c;
+//                        }
+                        if (w_a <= CWPDefaultValue.addOrDelCraneTime) {
                             addOrDelCraneTime = minWorkTime;
                         } else {
                             addOrDelCraneTime = a_c;
